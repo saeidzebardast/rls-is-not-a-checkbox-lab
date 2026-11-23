@@ -66,7 +66,7 @@ The code from the post is copied unchanged. Lab-only additions are the demo sche
 | `client_notes` | A `to authenticated using (true)` policy, so anyone who signs up can read it | Probe (signed-up user pass) and lint, as a warning |
 | `find_client(text)` | A `security definer` function anyone can call through `/rpc` | Lint |
 | `waitlist` | An empty table, where an empty answer proves nothing | Probe, until it has a seed row |
-| `id-documents` bucket | A broad `select` policy on `storage.objects` for `anon` | The `curl` below. The post's lint and probe don't look at Storage. Local `supabase db advisors` (CLI 3.3.0) does not yet ship lint 0025 |
+| `id-documents` bucket | A broad `select` policy on `storage.objects` for `anon` | The `curl` below. The post's lint and probe don't look at Storage |
 
 `plans` is public on purpose and sits on the allowlist. `audit_log` has no grants at all. Both pass in every run, which is how you know the probe isn't just failing on everything.
 
@@ -167,15 +167,6 @@ WARN	rls_policy_always_true	waitlist INSERT with check (true) for anon — inten
 Passing run (fixed workflow): https://github.com/saeidzebardast/rls-is-not-a-checkbox-lab/actions/runs/45283239581
 
 The `is_staff()` warning stays after the fix on purpose. Helper functions used inside policies often need to be callable by signed-in users, so the lint reports it for a human to look at and doesn't fail the build.
-
-## What the lab found beyond the article
-
-1. `supabase status -o env` prints both `PUBLISHABLE_KEY` (`sb_publishable_…`) and legacy `ANON_KEY` (JWT). `${PUBLISHABLE_KEY:-$ANON_KEY}` works. The probe's anon pass does not need an `Authorization` header when the key is not a JWT; Kong accepts the `apikey` header alone.
-2. Through Kong, a relation with no grant returns **401** for anon and **403** for a signed-in user. The probe treats both as "no grant".
-3. Local `supabase db advisors` (CLI 3.3.0) reports lint 0010 on `booking_summary` and search_path / always-true WARNs. It does **not** report storage lint 0025 or definer-execute lint 0028; those newer splinter lints are not in the local SQL bundle.
-4. `handle_new_user()` is not flagged by the post's lint (trigger return type). Advisors only warn on its mutable `search_path`.
-5. Default grants for new `public` tables/functions are still on (`auto_expose_new_tables` defaults to true). The leftover anon write grants on `bookings` appear without copying the post's `alter default privileges` lines.
-6. On Podman, `[analytics] enabled = true` fails health checks (vector expects a Docker engine socket). This lab sets analytics to false.
 
 ## License
 
