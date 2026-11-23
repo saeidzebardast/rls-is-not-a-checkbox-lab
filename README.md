@@ -85,7 +85,7 @@ Before the fix the response lists `SPECIMEN-NOT-A-REAL-DOCUMENT.txt` and `specim
 
 ## Results
 
-Outputs below are from a local run on CLI 3.3.0 (Podman). CI links will be filled in after the first Actions runs on `main`.
+Lint and probe outputs below are from the first Actions runs on `main` (CLI 3.3.0). Advisors and Storage curl are from a matching local run.
 
 ### Before the fix
 
@@ -128,7 +128,7 @@ WARN	function_search_path_mutable	Function public.plan_count has a role mutable 
 WARN	rls_policy_always_true	waitlist policy "join the waitlist" INSERT with check (true) for anon
 ```
 
-Failing workflow: [.github/workflows/rls-probe.yml](.github/workflows/rls-probe.yml) on `main` (red by design). <!-- CI run URL after first push -->
+Failing run (broken state): https://github.com/saeidzebardast/rls-is-not-a-checkbox-lab/actions/runs/45283239573
 
 ### After the fix
 
@@ -164,7 +164,7 @@ WARN	rls_policy_always_true	waitlist INSERT with check (true) for anon — inten
 
 `supabase db advisors --type security --fail-on error` exits 0 after the fix. The WARNs above stay on purpose: search_path on helper functions, and the allowlisted anon insert on `waitlist`.
 
-Passing workflow: [.github/workflows/rls-probe-fixed.yml](.github/workflows/rls-probe-fixed.yml). <!-- CI run URL after first push -->
+Passing run (fixed workflow): https://github.com/saeidzebardast/rls-is-not-a-checkbox-lab/actions/runs/45283239581
 
 The `is_staff()` warning stays after the fix on purpose. Helper functions used inside policies often need to be callable by signed-in users, so the lint reports it for a human to look at and doesn't fail the build.
 
