@@ -1,0 +1,3 @@
+# role:relation pairs that may insert, update or delete through the API.
+anon:public.waitlist
+authenticated:public.bookings

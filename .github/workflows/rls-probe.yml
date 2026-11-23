@@ -1,0 +1,32 @@
+name: rls-probe
+on:
+  pull_request:
+  push:
+  workflow_dispatch:
+
+jobs:
+  anon-probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - uses: supabase/setup-cli@v3
+      - run: supabase start # first start applies migrations, then supabase/seed.sql
+      - name: RLS lint
+        run: |
+          eval "$(supabase status -o env)"
+          list() { grep -v '^#' "$1" | paste -sd, -; }
+          problems=$(psql "$DB_URL" -At -F $'\t' -v schemas=public \
+            -v public_allow="$(list rls-public-allowlist.txt)" \
+            -v write_allow="$(list rls-write-allowlist.txt)" -f rls-lint.sql)
+          echo "$problems"
+          if grep -q '^error' <<< "$problems"; then exit 1; fi
+      - name: Anon-key probe
+        if: always()
+        run: |
+          eval "$(supabase status -o env)"
+          psql "$DB_URL" -At -F $'\t' -v schemas=public -f relations.sql > relations.tsv
+          SUPABASE_URL="$API_URL" SUPABASE_ANON_KEY="${PUBLISHABLE_KEY:-$ANON_KEY}" \
+            PROBE_SIGN_UP=1 node scripts/anon-probe.mts

@@ -1,0 +1,2 @@
+# Relations anon may read on purpose. Keep this list short.
+public.plans
